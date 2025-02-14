@@ -2,31 +2,42 @@
 
 import Image from "next/image";
 import { Typography,Button } from '@mui/material';
+import { CoinData } from "./api/coin/types";
+import { useEffect, useState } from "react";
 
 
-export default function Home() {
-  const fetchData = async () => {
-    try {
-      const res = await fetch('/api/test2');
-      if (!res.ok) throw new Error('Failed to fetch');
-      
-      const data = await res.json();
-      alert(JSON.stringify(data));
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+export default function CoinPrice() {
+  const [coinData, setCoinData] = useState<CoinData | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetch('/api/test');
+      if(!res.ok) throw new Error('Failed to fetch');
+      const result = await res.json();
+      console.log(result);
+      if(result.data && result.data.length > 0){
+        const newPrice = result.data[0].trade_price;
+
+        if(!coinData || coinData.trade_price !== newPrice){
+          setCoinData(result.data[0]);
+        }
+      }      
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Typography variant='body2'>
-          Coin Chart                      
-        </Typography>
-        <Button onClick={fetchData}>
-          Button                 
-        </Button>
-      </main>
+    <div>
+      <h2>비트코인 가격</h2>
+      {coinData ? (
+        <p>{coinData.trade_price.toLocaleString()} 원</p>
+      ) : (
+        <p>로딩 중...</p>
+      )}
     </div>
   );
 }
